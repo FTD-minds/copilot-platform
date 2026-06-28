@@ -1,0 +1,29 @@
+name: Feature / Module work
+description: Propose a feature, module, or phase task
+labels: [enhancement]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What capability should exist and why (business + role-family value)?
+    validations:
+      required: true
+  - type: input
+    id: module
+    attributes:
+      label: Module / Phase
+      placeholder: e.g., Module 1 / Phase 3 — diagnostic agent
+  - type: textarea
+    id: artifact
+    attributes:
+      label: Public artifact produced
+      description: Per BUILD_PRINCIPLES.md, what demoable artifact does this yield?
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] eval suite updated
+        - [ ] ADR added if needed
