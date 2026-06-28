@@ -21,7 +21,7 @@ jobs:
       - name: Lint (ruff)
         run: ruff check .
       - name: Type check (mypy)
-        run: mypy platform modules || true   # advisory in early phases
+        run: mypy core modules || true   # advisory in early phases
       - name: Unit + integration tests
         run: pytest -q
 
@@ -39,4 +39,4 @@ jobs:
           pip install -e ".[dev]"
       - name: Run evaluation gate
         # Phase 4 makes this enforcing. Until then it runs in report-only mode.
-        run: python -m platform.evaluation.run_gate --report-only
+        run: python -m core.evaluation.run_gate --report-only
