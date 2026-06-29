@@ -5,6 +5,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY core ./core
 COPY modules ./modules
+COPY frontend ./frontend
 RUN pip install --no-cache-dir -e .
 
 EXPOSE 8000
