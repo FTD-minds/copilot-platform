@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise AI Copilot Platform — Console</title>
+<style>
+  :root{--bg:#0b0f17;--card:#141b2b;--ink:#e8edf5;--mut:#9fb0c8;--acc:#4f9cf9;--ok:#43d6a3;--bad:#ff6b6b;--line:#22304a}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px}
+  h1{font-size:1.6rem;letter-spacing:-.02em}
+  .sub{color:var(--mut);margin:6px 0 24px}
+  .tabs{display:flex;gap:8px;margin-bottom:20px}
+  .tab{padding:8px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer}
+  .tab.active{background:var(--acc);color:#04101f;border-color:var(--acc);font-weight:600}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+  textarea,input{width:100%;background:#0e1626;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  button.go{margin-top:12px;padding:10px 18px;background:var(--acc);color:#04101f;border:none;border-radius:10px;font-weight:600;cursor:pointer}
+  .ans{margin-top:16px;white-space:pre-wrap}
+  .chip{display:inline-block;font-size:.78rem;background:#0e1626;border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin:3px 4px 0 0;color:var(--mut)}
+  .steps{font-family:ui-monospace,Menlo,monospace;font-size:.82rem;color:var(--mut);margin-top:10px}
+  .metric{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+  .bar{height:8px;border-radius:6px;background:#0e1626;flex:1;margin:0 14px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:var(--ok)}
+  .val{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
+  .pass{color:var(--ok)}.fail{color:var(--bad)}
+  .hidden{display:none}
+  .muted{color:var(--mut);font-size:.85rem}
+  a{color:var(--acc)}
+  code{background:#0e1626;padding:1px 6px;border-radius:6px;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Enterprise AI Copilot Platform</h1>
+  <div class="sub">Module 1 — ERP Sync Reconciliation Copilot · <a href="https://github.com/FTD-minds/copilot-platform">source</a></div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="diag">Diagnose</div>
+    <div class="tab" data-tab="evals">Eval Dashboard</div>
+  </div>
+
+  <!-- DIAGNOSE -->
+  <section id="diag">
+    <div class="card">
+      <label class="muted">Describe the sync / reconciliation problem</label>
+      <textarea id="q">My Stripe payout does not match the deposit in my bank feed</textarea>
+      <div class="row">
+        <input id="gross" placeholder="gross payments (e.g. 600,400)" value="600,400">
+        <input id="fees" placeholder="processor fees (e.g. 0)" value="0">
+      </div>
+      <div class="row">
+        <input id="deposit" placeholder="bank deposit (e.g. 970)" value="970">
+        <input id="mapping" placeholder="mapping: item|coa vs item|coa (e.g. item,coa)">
+      </div>
+      <button class="go" onclick="diagnose()">Diagnose</button>
+      <div id="out" class="ans"></div>
+    </div>
+  </section>
+
+  <!-- EVALS -->
+  <section id="evals" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>Evaluation metrics</strong>
+        <span id="gate" class="muted">loading…</span>
+      </div>
+      <div id="metrics" style="margin-top:12px"></div>
+      <div class="muted" style="margin-top:12px">Golden cases: <span id="ncases">—</span> · gate enforced in CI</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $('#diag').classList.toggle('hidden', t.dataset.tab!=='diag');
+  $('#evals').classList.toggle('hidden', t.dataset.tab!=='evals');
+  if(t.dataset.tab==='evals') loadEvals();
+});
+
+async function diagnose(){
+  const inputs = {};
+  const gross = $('#gross').value.trim();
+  if(gross){ inputs.gross_payments = gross.split(',').map(x=>parseFloat(x)); inputs.processor_fees = parseFloat($('#fees').value||'0'); inputs.bank_deposit = parseFloat($('#deposit').value||'0'); }
+  const m = $('#mapping').value.trim();
+  if(m){ const [a,b]=m.split(','); inputs.item_mapping_mode=(a||'').trim(); inputs.integration_mode=(b||'').trim(); }
+  $('#out').innerHTML = '<span class="muted">diagnosing…</span>';
+  const r = await fetch('/modules/erp-sync/agent-diagnose',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:$('#q').value,inputs})});
+  const d = await r.json();
+  let html = '<div>'+d.answer+'</div>';
+  html += '<div style="margin-top:10px">'+d.citations.map(c=>'<span class="chip">'+c+'</span>').join('')+'</div>';
+  html += '<div class="steps">steps: '+d.steps.map(s=>s.name).join(' → ')+'</div>';
+  if(d.tool_outputs && d.tool_outputs.reconciliation_calculator){
+    const t=d.tool_outputs.reconciliation_calculator;
+    html += '<div class="steps">recon: expected_net='+t.expected_net+' discrepancy='+t.discrepancy+' reconciles='+t.reconciles+'</div>';
+  }
+  $('#out').innerHTML = html;
+}
+
+async function loadEvals(){
+  $('#metrics').innerHTML='<span class="muted">running evals…</span>';
+  const r = await fetch('/api/evals'); const d = await r.json();
+  $('#ncases').textContent = d.cases.length;
+  $('#gate').innerHTML = d.passing ? '<span class="pass">● PASSING</span>' : '<span class="fail">● FAILING</span>';
+  $('#metrics').innerHTML = Object.entries(d.metrics).map(([k,v])=>{
+    const th = d.thresholds[k]; const ok = v>=th; const pct=Math.round(v*100);
+    return '<div class="metric"><span>'+k+'</span><span class="bar"><i style="width:'+pct+'%;background:'+(ok?'var(--ok)':'var(--bad)')+'"></i></span><span class="val '+(ok?'pass':'fail')+'">'+pct+'% / '+Math.round(th*100)+'%</span></div>';
+  }).join('');
+}
+</script>
+</body>
+</html>

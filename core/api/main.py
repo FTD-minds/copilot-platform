@@ -6,10 +6,13 @@ configured provider (mock by default, Anthropic/OpenAI when keys are set).
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from core.api.evals_routes import router as evals_router
 from core.config import get_settings
 from core.providers.base import ChatMessage
 from core.providers.router import available_providers, get_provider
@@ -23,6 +26,15 @@ app = FastAPI(
     description="Model-agnostic platform API. Module 1: ERP Sync Reconciliation Copilot.",
     version="0.1.0",
 )
+
+app.include_router(evals_router)
+
+_FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
+
+
+@app.get("/")
+def ui() -> FileResponse:
+    return FileResponse(str(_FRONTEND / "index.html"))
 
 
 class ChatTurn(BaseModel):
