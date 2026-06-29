@@ -12,6 +12,7 @@ Enterprise teams adopt AI fastest when copilots are **trustworthy, evaluated, an
 |---|---|---|
 | **ERP Sync Reconciliation Copilot** | 🚧 in progress (Module 1) | Diagnoses why an ERP/accounting sync or reconciliation failed; explains root cause with citations; suggests a fix. Every answer is scored by the eval framework. |
 | _Platform core_ | ✅ Phase 1 | Model-agnostic provider router + FastAPI gateway (`/health`, `/providers`, `/chat`) + Docker + Postgres/pgvector. |
+| _Retrieval (RAG)_ | ✅ Phase 2 | Pluggable embedder + vector store; `/modules/erp-sync/diagnose` grounds answers in a knowledge base **with citations**. |
 | Integration Health Monitor | planned | Detects sync drift, generates plain-language incident explanations |
 | Customer Onboarding Copilot | planned | Guides + live-validates a customer's integration setup |
 | AI Support Engineer | planned | Ticket triage, deflection, runbook answers |

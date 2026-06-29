@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from core.config import get_settings
 from core.providers.base import ChatMessage
 from core.providers.router import available_providers, get_provider
+from modules.erp_sync_reconciliation.service import ReconciliationCopilot
 
 logging.basicConfig(level=get_settings().log_level)
 logger = logging.getLogger("copilot.api")
@@ -42,6 +43,26 @@ class ChatReply(BaseModel):
     usage: dict
 
 
+class DiagnoseRequest(BaseModel):
+    query: str
+    k: int = 3
+    provider: str | None = None
+    model: str | None = None
+
+
+class CitationModel(BaseModel):
+    id: str
+    title: str
+    score: float
+
+
+class DiagnoseReply(BaseModel):
+    answer: str
+    citations: list[CitationModel]
+    provider: str
+    model: str
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "service": "copilot-platform", "version": app.version}
@@ -63,3 +84,28 @@ def chat(req: ChatRequest) -> ChatReply:
     logger.info("chat.response provider=%s model=%s out_tokens=%s",
                 resp.provider, resp.model, resp.usage.get("output_tokens"))
     return ChatReply(text=resp.text, provider=resp.provider, model=resp.model, usage=resp.usage)
+
+
+# --- Module 1: ERP Sync Reconciliation Copilot ---
+_copilot: ReconciliationCopilot | None = None
+
+
+def _get_copilot() -> ReconciliationCopilot:
+    global _copilot
+    if _copilot is None:
+        _copilot = ReconciliationCopilot()
+    return _copilot
+
+
+@app.post("/modules/erp-sync/diagnose", response_model=DiagnoseReply)
+def diagnose(req: DiagnoseRequest) -> DiagnoseReply:
+    copilot = _get_copilot()
+    result = copilot.diagnose(req.query, k=req.k, provider=req.provider, model=req.model)
+    logger.info("diagnose provider=%s model=%s citations=%d",
+                result.provider, result.model, len(result.citations))
+    return DiagnoseReply(
+        answer=result.answer,
+        citations=[CitationModel(id=c.id, title=c.title, score=c.score) for c in result.citations],
+        provider=result.provider,
+        model=result.model,
+    )

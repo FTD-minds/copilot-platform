@@ -1,0 +1,50 @@
+[
+  {
+    "id": "kb-001",
+    "title": "Item-level vs Chart-of-Accounts mapping mismatch",
+    "category": "mapping",
+    "text": "A sync fails or posts to the wrong ledger when products are mapped at the item level but the integration is configured to use chart-of-accounts (COA) mapping, or vice versa. Symptom: revenue lands in an unexpected income account, or the sync errors with an unmapped-item error. Root cause: the mapping mode in the integration settings does not match how the customer set up their items. Fix: confirm whether each product maps to a specific income account (item-level) or inherits from a COA default, align the integration's mapping mode, then re-run the failed sync batch."
+  },
+  {
+    "id": "kb-002",
+    "title": "Undeposited funds not clearing",
+    "category": "reconciliation",
+    "text": "Payments show as received but never appear in the bank register, inflating the Undeposited Funds account. Root cause: individual payments were recorded but never grouped into a bank deposit that matches the actual bank settlement (e.g., a Stripe payout batching several charges). Fix: create a deposit that groups the individual payments to match the single bank-feed settlement amount, then match that deposit to the bank-feed transaction."
+  },
+  {
+    "id": "kb-003",
+    "title": "Stripe/ACH payout does not match deposit amount",
+    "category": "reconciliation",
+    "text": "A bank feed shows one Stripe or ACH payout, but the books show several separate payments that do not reconcile. Root cause: the processor aggregates many customer charges into a single payout and deducts processing fees, so gross recorded payments != net deposited amount. Fix: record the processor fee as an expense line on the deposit so the net deposit equals the bank-feed payout, then reconcile."
+  },
+  {
+    "id": "kb-004",
+    "title": "Misapplied payment to wrong invoice",
+    "category": "reconciliation",
+    "text": "A customer balance looks wrong because a payment was applied to the wrong invoice or left unapplied. Symptom: an open invoice that the customer already paid, plus an unexplained credit. Fix: locate the payment, unapply it, and re-apply it to the correct invoice; confirm the customer's open balance returns to expected."
+  },
+  {
+    "id": "kb-005",
+    "title": "Canada (CRA) sales-tax sync differences",
+    "category": "tax",
+    "text": "Canadian sales-tax sync behaves differently from the US: GST/HST/PST/QST may need to map to specific tax agencies and codes, and combined taxes can split across agencies. Symptom: tax amounts sync to the wrong agency or fail validation. Root cause: tax codes are not mapped to the correct CRA agencies, or a combined rate is expected to be a single code. Fix: map each Canadian tax code to its agency, validate combined-tax handling against a known transaction, and re-run."
+  },
+  {
+    "id": "kb-006",
+    "title": "Sage Intacct to NetSuite migration sync drift",
+    "category": "migration",
+    "text": "After migrating systems of record, post-migration syncs drift because account IDs, dimensions, or entity structures changed. Symptom: transactions fail to post or land under the wrong entity/dimension. Root cause: the integration still references pre-migration account/dimension IDs. Fix: update the integration mapping to the new system's account and dimension IDs, validate with a sample transaction per entity, then resume sync."
+  },
+  {
+    "id": "kb-007",
+    "title": "AP automation (Ramp) configuration gaps",
+    "category": "ap-automation",
+    "text": "AP automation rollouts fail to post bills cleanly when GL accounts, approval routing, or vendor mappings are incomplete. Symptom: bills stuck in approval, or sync to the ERP errors on an unmapped vendor or GL code. Fix: complete vendor-to-ERP mapping, define GL coding defaults, confirm approval routing, then test a single bill end to end before bulk adoption."
+  },
+  {
+    "id": "kb-008",
+    "title": "Sandbox-first reproduction workflow",
+    "category": "method",
+    "text": "Before troubleshooting any reported sync bug, reproduce it in a sandbox by rebuilding the exact scenario (same item setup, mapping mode, transaction, and dates). This isolates root cause and distinguishes a genuine platform defect from a configuration or user error. If the issue reproduces in sandbox, route to Engineering with the exact steps; if not, the cause is environment/config specific."
+  }
+]
