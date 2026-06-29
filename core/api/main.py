@@ -63,6 +63,18 @@ class DiagnoseReply(BaseModel):
     model: str
 
 
+class AgentDiagnoseRequest(BaseModel):
+    query: str
+    inputs: dict = {}
+
+
+class AgentDiagnoseReply(BaseModel):
+    answer: str
+    steps: list[dict]
+    citations: list[str]
+    tool_outputs: dict
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "service": "copilot-platform", "version": app.version}
@@ -108,4 +120,23 @@ def diagnose(req: DiagnoseRequest) -> DiagnoseReply:
         citations=[CitationModel(id=c.id, title=c.title, score=c.score) for c in result.citations],
         provider=result.provider,
         model=result.model,
+    )
+
+
+@app.post("/modules/erp-sync/agent-diagnose", response_model=AgentDiagnoseReply)
+def agent_diagnose(req: AgentDiagnoseRequest) -> AgentDiagnoseReply:
+    from core.retrieval.store import InMemoryVectorStore
+    from modules.erp_sync_reconciliation.agents.diagnostic_agent import DiagnosticAgent
+    from modules.erp_sync_reconciliation.service import load_kb
+
+    store = InMemoryVectorStore()
+    store.add(load_kb())
+    agent = DiagnosticAgent(store)
+    result = agent.run(req.query, inputs=req.inputs)
+    logger.info("agent.diagnose steps=%d tools=%s", len(result.steps), list(result.tool_outputs))
+    return AgentDiagnoseReply(
+        answer=result.answer,
+        steps=[{"name": s.name, "detail": s.detail} for s in result.steps],
+        citations=result.citations,
+        tool_outputs=result.tool_outputs,
     )

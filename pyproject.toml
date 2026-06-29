@@ -19,6 +19,7 @@ dev = [
 ]
 anthropic = ["anthropic>=0.39"]
 openai = ["openai>=1.40"]
+mcp = ["mcp>=1.0"]
 
 [tool.ruff]
 line-length = 100
