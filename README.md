@@ -2,6 +2,16 @@
 
 > A modular, model-agnostic platform for enterprise AI copilots. Each module is an independently deployable, evaluated AI system sharing common platform services (auth, AI orchestration, retrieval, evaluation, observability, deployment).
 
+### 🔴 Live demo: **https://copilot-platform.onrender.com**
+Try it: open the URL for the Diagnose console + Eval Dashboard, or hit the API directly:
+```bash
+curl https://copilot-platform.onrender.com/health
+curl -X POST https://copilot-platform.onrender.com/modules/erp-sync/agent-diagnose \
+  -H 'content-type: application/json' \
+  -d '{"query":"stripe payout does not match deposit","inputs":{"gross_payments":[600,400],"processor_fees":0,"bank_deposit":970}}'
+```
+*(Free-tier host — first request after idle may take ~30–50s to wake.)*
+
 [![CI](https://github.com/FTD-minds/copilot-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/FTD-minds/copilot-platform/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
