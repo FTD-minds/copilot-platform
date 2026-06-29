@@ -11,10 +11,14 @@ is shown so you can confirm a real model answered; keys are redacted everywhere.
 from __future__ import annotations
 
 import argparse
+import sys
 import time
+from pathlib import Path
 
-from core.providers.base import ChatMessage
-from core.providers.router import available_providers, get_provider
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from core.providers.base import ChatMessage  # noqa: E402
+from core.providers.router import available_providers, get_provider  # noqa: E402
 
 
 def _redact(env_present: dict[str, bool]) -> dict[str, str]:
