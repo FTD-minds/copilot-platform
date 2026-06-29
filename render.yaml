@@ -1,0 +1,19 @@
+# Render Blueprint — one-click deploy of the Enterprise AI Copilot Platform
+# Render auto-detects this file when you connect the GitHub repo. No CLI needed.
+services:
+  - type: web
+    name: copilot-platform
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: LLM_PROVIDER
+        value: mock            # demo runs fully on the deterministic mock provider (no key needed)
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      # To enable real inference later, add ANTHROPIC_API_KEY or OPENAI_API_KEY
+      # in the Render dashboard (Environment tab) and set LLM_PROVIDER accordingly.
