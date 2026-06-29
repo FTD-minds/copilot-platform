@@ -60,23 +60,25 @@ class DiagnosticAgent:
         tool_outputs: dict = {}
 
         if "reconciliation_calculator" in plan and {"gross_payments", "bank_deposit"} <= inputs.keys():
-            res = reconciliation_calculator(
+            recon = reconciliation_calculator(
                 gross_payments=[float(x) for x in inputs["gross_payments"]],
                 processor_fees=float(inputs.get("processor_fees", 0.0)),
                 bank_deposit=float(inputs["bank_deposit"]),
             )
             tool_outputs["reconciliation_calculator"] = {
-                "reconciles": res.reconciles,
-                "expected_net": res.expected_net,
-                "discrepancy": res.discrepancy,
-                "explanation": res.explanation,
+                "reconciles": recon.reconciles,
+                "expected_net": recon.expected_net,
+                "discrepancy": recon.discrepancy,
+                "explanation": recon.explanation,
             }
-            steps.append(AgentStep("reconciliation_calculator", res.explanation))
+            steps.append(AgentStep("reconciliation_calculator", recon.explanation))
 
         if "mapping_validator" in plan and {"item_mapping_mode", "integration_mode"} <= inputs.keys():
-            res = mapping_validator(inputs["item_mapping_mode"], inputs["integration_mode"])
-            tool_outputs["mapping_validator"] = {"valid": res.valid, "issue": res.issue, "fix": res.fix}
-            steps.append(AgentStep("mapping_validator", res.issue or "modes match"))
+            mapping = mapping_validator(inputs["item_mapping_mode"], inputs["integration_mode"])
+            tool_outputs["mapping_validator"] = {
+                "valid": mapping.valid, "issue": mapping.issue, "fix": mapping.fix,
+            }
+            steps.append(AgentStep("mapping_validator", mapping.issue or "modes match"))
 
         # 3. SYNTHESIZE — grounded answer + tool findings.
         parts: list[str] = []

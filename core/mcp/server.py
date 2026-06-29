@@ -52,16 +52,16 @@ def build_tool_specs() -> list[dict[str, Any]]:
 def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     """Dispatch a tool call by name (used by the MCP server and tests)."""
     if name == "reconciliation_calculator":
-        r = reconciliation_calculator(
+        recon = reconciliation_calculator(
             gross_payments=[float(x) for x in arguments["gross_payments"]],
             processor_fees=float(arguments.get("processor_fees", 0.0)),
             bank_deposit=float(arguments["bank_deposit"]),
         )
-        return {"reconciles": r.reconciles, "expected_net": r.expected_net,
-                "discrepancy": r.discrepancy, "explanation": r.explanation}
+        return {"reconciles": recon.reconciles, "expected_net": recon.expected_net,
+                "discrepancy": recon.discrepancy, "explanation": recon.explanation}
     if name == "mapping_validator":
-        r = mapping_validator(arguments["item_mapping_mode"], arguments["integration_mode"])
-        return {"valid": r.valid, "issue": r.issue, "fix": r.fix}
+        mapping = mapping_validator(arguments["item_mapping_mode"], arguments["integration_mode"])
+        return {"valid": mapping.valid, "issue": mapping.issue, "fix": mapping.fix}
     raise ValueError(f"Unknown tool: {name}")
 
 

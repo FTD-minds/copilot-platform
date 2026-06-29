@@ -2,7 +2,11 @@
 
 > A modular, model-agnostic platform for enterprise AI copilots. Each module is an independently deployable, evaluated AI system sharing common platform services (auth, AI orchestration, retrieval, evaluation, observability, deployment).
 
-[![CI](https://github.com/USER/copilot-platform/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
+[![CI](https://github.com/FTD-minds/copilot-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/FTD-minds/copilot-platform/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-20%20passing-brightgreen)
+![Evals](https://img.shields.io/badge/eval--gate-enforcing-blueviolet)
 
 ## Why this exists
 Enterprise teams adopt AI fastest when copilots are **trustworthy, evaluated, and deployable into real workflows**. This platform demonstrates that pattern, starting with a module drawn from a real, high-friction enterprise problem: **ERP sync & reconciliation failures**.
@@ -10,7 +14,7 @@ Enterprise teams adopt AI fastest when copilots are **trustworthy, evaluated, an
 ## Modules
 | Module | Status | What it does |
 |---|---|---|
-| **ERP Sync Reconciliation Copilot** | 🚧 in progress (Module 1) | Diagnoses why an ERP/accounting sync or reconciliation failed; explains root cause with citations; suggests a fix. Every answer is scored by the eval framework. |
+| **ERP Sync Reconciliation Copilot** | ✅ Phases 1–5 complete | Diagnoses why an ERP/accounting sync or reconciliation failed; explains root cause with citations; suggests a fix. Every answer is scored by the enforcing eval framework. |
 | _Platform core_ | ✅ Phase 1 | Model-agnostic provider router + FastAPI gateway (`/health`, `/providers`, `/chat`) + Docker + Postgres/pgvector. |
 | _Retrieval (RAG)_ | ✅ Phase 2 | Pluggable embedder + vector store; `/modules/erp-sync/diagnose` grounds answers in a knowledge base **with citations**. |
 | _Diagnostic agent + MCP_ | ✅ Phase 3 | Multi-step agent (plan→act→synthesize) combining RAG + computational tools (reconciliation calculator, mapping validator); tools exposed over **MCP**. `/modules/erp-sync/agent-diagnose`. |

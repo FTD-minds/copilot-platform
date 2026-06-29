@@ -26,7 +26,7 @@ class AnthropicProvider:
             model=used_model, max_tokens=1024, system=system or "", messages=convo  # type: ignore[arg-type]
         )
         text = "".join(
-            block.text for block in resp.content if getattr(block, "type", "") == "text"  # type: ignore[attr-defined]
+            block.text for block in resp.content if getattr(block, "type", "") == "text"  # type: ignore[union-attr]
         )
         return ChatResponse(
             text=text,
