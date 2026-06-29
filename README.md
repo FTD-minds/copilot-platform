@@ -14,6 +14,7 @@ Enterprise teams adopt AI fastest when copilots are **trustworthy, evaluated, an
 | _Platform core_ | ✅ Phase 1 | Model-agnostic provider router + FastAPI gateway (`/health`, `/providers`, `/chat`) + Docker + Postgres/pgvector. |
 | _Retrieval (RAG)_ | ✅ Phase 2 | Pluggable embedder + vector store; `/modules/erp-sync/diagnose` grounds answers in a knowledge base **with citations**. |
 | _Diagnostic agent + MCP_ | ✅ Phase 3 | Multi-step agent (plan→act→synthesize) combining RAG + computational tools (reconciliation calculator, mapping validator); tools exposed over **MCP**. `/modules/erp-sync/agent-diagnose`. |
+| _Evaluation framework_ | ✅ Phase 4 | Golden dataset + metrics (retrieval/tool/groundedness) with an **enforcing CI eval-gate** — quality regressions block merges. |
 | Integration Health Monitor | planned | Detects sync drift, generates plain-language incident explanations |
 | Customer Onboarding Copilot | planned | Guides + live-validates a customer's integration setup |
 | AI Support Engineer | planned | Ticket triage, deflection, runbook answers |

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "eval-001",
+    "query": "My Stripe payout does not match the deposit in my bank feed",
+    "inputs": {"gross_payments": [600, 400], "processor_fees": 0, "bank_deposit": 970},
+    "expected_citation": "kb-003",
+    "expect_tool": "reconciliation_calculator",
+    "expect_reconciles": false,
+    "expected_discrepancy": -30.0
+  },
+  {
+    "id": "eval-002",
+    "query": "items are posting to the wrong income account after sync",
+    "inputs": {"item_mapping_mode": "item", "integration_mode": "coa"},
+    "expected_citation": "kb-001",
+    "expect_tool": "mapping_validator",
+    "expect_mapping_valid": false
+  },
+  {
+    "id": "eval-003",
+    "query": "undeposited funds are not clearing in QuickBooks",
+    "inputs": {},
+    "expected_citation": "kb-002",
+    "expect_tool": null
+  },
+  {
+    "id": "eval-004",
+    "query": "canada sales tax is syncing to the wrong CRA agency",
+    "inputs": {},
+    "expected_citation": "kb-005",
+    "expect_tool": null
+  },
+  {
+    "id": "eval-005",
+    "query": "a customer payment was applied to the wrong invoice",
+    "inputs": {},
+    "expected_citation": "kb-004",
+    "expect_tool": null
+  },
+  {
+    "id": "eval-006",
+    "query": "after migrating from Sage Intacct to NetSuite transactions fail to post",
+    "inputs": {},
+    "expected_citation": "kb-006",
+    "expect_tool": null
+  },
+  {
+    "id": "eval-007",
+    "query": "Ramp AP bills are stuck and not posting to the ERP",
+    "inputs": {},
+    "expected_citation": "kb-007",
+    "expect_tool": null
+  },
+  {
+    "id": "eval-008",
+    "query": "gross charges 100 and 100 with a 5 fee should deposit 195",
+    "inputs": {"gross_payments": [100, 100], "processor_fees": 5, "bank_deposit": 195},
+    "expected_citation": "kb-003",
+    "expect_tool": "reconciliation_calculator",
+    "expect_reconciles": true
+  }
+]
