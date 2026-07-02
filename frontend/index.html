@@ -3,116 +3,681 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enterprise AI Copilot Platform — Console</title>
+<title>Enterprise AI Copilot Platform — RAG copilots with evaluation-gated CI/CD</title>
+<meta name="description" content="Production-ready enterprise AI platform for diagnosing operational problems. RAG over a domain knowledge base, citation-backed answers, model-agnostic provider router, and an evaluation gate enforced in CI.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Enterprise AI Copilot Platform">
+<meta property="og:description" content="RAG, citations, model routing, and evaluation-gated CI/CD — a modular platform for enterprise AI copilots. Module 1: ERP Sync Reconciliation.">
+<meta property="og:url" content="https://copilot-platform.onrender.com">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect x='1.5' y='1.5' width='23' height='23' rx='6.5' fill='%230a0e15' stroke='%234f9cf9' stroke-width='1.6'/%3E%3Ccircle cx='9' cy='13' r='2.2' fill='%234f9cf9'/%3E%3Ccircle cx='17.5' cy='8.5' r='1.7' fill='%2343d6a3'/%3E%3Ccircle cx='17.5' cy='17.5' r='1.7' fill='%234f9cf9' opacity='.55'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0b0f17;--card:#141b2b;--ink:#e8edf5;--mut:#9fb0c8;--acc:#4f9cf9;--ok:#43d6a3;--bad:#ff6b6b;--line:#22304a}
+  :root{
+    --bg:#0a0e15; --bg2:#0c1119; --panel:#10161f; --panel2:#131a25;
+    --ink:#e9eef6; --mut:#93a3ba; --dim:#5d6d84;
+    --acc:#4f9cf9; --acc-soft:rgba(79,156,249,.14);
+    --ok:#43d6a3; --ok-soft:rgba(67,214,163,.12);
+    --bad:#ff6b6b; --warn:#f0b45e;
+    --line:#1d2836; --line2:#27354a;
+    --disp:"Fraunces",Georgia,serif;
+    --body:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    --r:16px;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-  .wrap{max-width:980px;margin:0 auto;padding:32px 20px}
-  h1{font-size:1.6rem;letter-spacing:-.02em}
-  .sub{color:var(--mut);margin:6px 0 24px}
-  .tabs{display:flex;gap:8px;margin-bottom:20px}
-  .tab{padding:8px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);cursor:pointer}
-  .tab.active{background:var(--acc);color:#04101f;border-color:var(--acc);font-weight:600}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
-  textarea,input{width:100%;background:#0e1626;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}
-  textarea{min-height:70px;resize:vertical}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-  button.go{margin-top:12px;padding:10px 18px;background:var(--acc);color:#04101f;border:none;border-radius:10px;font-weight:600;cursor:pointer}
-  .ans{margin-top:16px;white-space:pre-wrap}
-  .chip{display:inline-block;font-size:.78rem;background:#0e1626;border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin:3px 4px 0 0;color:var(--mut)}
-  .steps{font-family:ui-monospace,Menlo,monospace;font-size:.82rem;color:var(--mut);margin-top:10px}
-  .metric{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-  .bar{height:8px;border-radius:6px;background:#0e1626;flex:1;margin:0 14px;overflow:hidden}
-  .bar > i{display:block;height:100%;background:var(--ok)}
-  .val{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
-  .pass{color:var(--ok)}.fail{color:var(--bad)}
-  .hidden{display:none}
-  .muted{color:var(--mut);font-size:.85rem}
-  a{color:var(--acc)}
-  code{background:#0e1626;padding:1px 6px;border-radius:6px;font-size:.85rem}
+  html{scroll-behavior:smooth;scroll-padding-top:84px}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:2000;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E")}
+  a{color:var(--acc);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+
+  /* ---------- nav ---------- */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,21,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .nav-in{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:22px}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:600;letter-spacing:-.01em}
+  .brand svg{flex:none}
+  .nav-links{display:flex;gap:18px;margin-left:auto;align-items:center}
+  .nav-links a{color:var(--mut);font-size:.9rem;transition:color .2s}
+  .nav-links a:hover{color:var(--ink)}
+  .status{display:inline-flex;align-items:center;gap:7px;font:500 .75rem var(--mono);color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--panel)}
+  .status i{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+  .status.ok i{background:var(--ok);box-shadow:0 0 0 0 rgba(67,214,163,.5);animation:ping 2.4s ease-out infinite}
+  .status.ok{color:var(--ok);border-color:rgba(67,214,163,.3)}
+  .status.err{color:var(--warn)}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(67,214,163,.45)}70%{box-shadow:0 0 0 7px rgba(67,214,163,0)}100%{box-shadow:0 0 0 0 rgba(67,214,163,0)}}
+  @media(max-width:840px){.nav-links a.nl{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;padding:150px 0 70px;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(600px 320px at 18% 8%,rgba(79,156,249,.16),transparent 65%),
+      radial-gradient(520px 300px at 85% 30%,rgba(67,214,163,.07),transparent 65%);
+  }
+  .hero::after{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:56px 56px;opacity:.25;
+    -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,black 30%,transparent 75%);
+    mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,black 30%,transparent 75%);
+  }
+  .hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+  @media(max-width:900px){.hero .wrap{grid-template-columns:1fr}}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 .74rem var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--acc);background:var(--acc-soft);border:1px solid rgba(79,156,249,.28);border-radius:999px;padding:6px 14px}
+  h1{font:600 3.4rem/1.08 var(--disp);letter-spacing:-.015em;margin:22px 0 14px}
+  @media(max-width:640px){h1{font-size:2.4rem}}
+  .tagline{font-size:1.22rem;color:var(--ink);font-weight:500;max-width:520px}
+  .lede{color:var(--mut);margin-top:14px;max-width:540px}
+  .lede strong{color:var(--ink);font-weight:600}
+  .ctas{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:13px 22px;border-radius:12px;font-weight:600;font-size:.95rem;border:1px solid var(--line2);color:var(--ink);background:var(--panel);transition:transform .18s,border-color .18s,box-shadow .18s;cursor:pointer}
+  .btn:hover{transform:translateY(-2px);border-color:var(--acc)}
+  .btn.primary{background:var(--acc);border-color:var(--acc);color:#04101f;box-shadow:0 8px 28px -8px rgba(79,156,249,.55)}
+  .btn.primary:hover{box-shadow:0 12px 34px -8px rgba(79,156,249,.7)}
+  .facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:40px;padding-top:22px;border-top:1px solid var(--line)}
+  .fact{font:500 .8rem var(--mono);color:var(--dim)}
+  .fact b{display:block;font:600 1.35rem var(--disp);color:var(--ink);letter-spacing:-.01em}
+
+  /* hero output card — real captured output */
+  .shot{position:relative;background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);box-shadow:0 30px 80px -30px rgba(0,0,0,.8);overflow:hidden}
+  .shot-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--line2)}
+  .shot-title{margin-left:6px;font:500 .74rem var(--mono);color:var(--dim)}
+  .shot-body{padding:18px;font-size:.86rem}
+  .shot-q{color:var(--mut);font-family:var(--mono);font-size:.78rem;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px}
+  .shot-a{margin-top:14px;color:var(--ink)}
+  .shot-a .cite{font:500 .72rem var(--mono);color:var(--acc);background:var(--acc-soft);border:1px solid rgba(79,156,249,.3);border-radius:6px;padding:1px 6px}
+  .shot-steps{margin-top:14px;font:400 .74rem var(--mono);color:var(--dim)}
+  .shot-recon{display:flex;gap:18px;margin-top:12px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;font:500 .76rem var(--mono)}
+  .shot-recon span{color:var(--mut)}
+  .shot-recon b{color:var(--bad);font-weight:600}
+  .shot-note{padding:10px 16px;border-top:1px solid var(--line);font:500 .72rem var(--mono);color:var(--ok);background:var(--ok-soft)}
+
+  /* ---------- sections ---------- */
+  section{padding:84px 0;position:relative}
+  .sec-eyebrow{font:500 .74rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--acc)}
+  h2{font:600 2.1rem/1.15 var(--disp);letter-spacing:-.01em;margin:10px 0 12px}
+  .sec-sub{color:var(--mut);max-width:620px}
+
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- pipeline ---------- */
+  .pipe{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:48px}
+  .node{position:relative;text-align:center;padding:0 8px}
+  .node-ic{width:58px;height:58px;margin:0 auto;border-radius:16px;background:var(--panel);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;transition:border-color .3s,box-shadow .3s}
+  .node:hover .node-ic{border-color:var(--acc);box-shadow:0 0 24px -6px rgba(79,156,249,.5)}
+  .node-ic svg{stroke:var(--acc)}
+  .node h4{font:600 .88rem var(--body);margin-top:12px}
+  .node p{font-size:.76rem;color:var(--dim);margin-top:4px;line-height:1.45}
+  .node::before{content:"";position:absolute;top:29px;left:calc(-50% + 29px);width:calc(100% - 58px);height:2px;
+    background:repeating-linear-gradient(90deg,var(--line2) 0 6px,transparent 6px 12px)}
+  .node:first-child::before{display:none}
+  .pipe.live .node-ic{animation:nodeglow 1s ease forwards}
+  .pipe.live .node:nth-child(1) .node-ic{animation-delay:.1s}
+  .pipe.live .node:nth-child(2) .node-ic{animation-delay:.55s}
+  .pipe.live .node:nth-child(3) .node-ic{animation-delay:1s}
+  .pipe.live .node:nth-child(4) .node-ic{animation-delay:1.45s}
+  .pipe.live .node:nth-child(5) .node-ic{animation-delay:1.9s}
+  .pipe.live .node:nth-child(6) .node-ic{animation-delay:2.35s}
+  @keyframes nodeglow{0%{border-color:var(--line2);box-shadow:none}45%{border-color:var(--acc);box-shadow:0 0 26px -4px rgba(79,156,249,.65)}100%{border-color:rgba(79,156,249,.5);box-shadow:0 0 16px -8px rgba(79,156,249,.4)}}
+  @media(max-width:900px){
+    .pipe{grid-template-columns:1fr 1fr 1fr}
+    .node{margin-bottom:28px}
+    .node:nth-child(4)::before{display:none}
+  }
+  @media(max-width:560px){
+    .pipe{grid-template-columns:1fr;max-width:280px;margin-left:auto;margin-right:auto}
+    .node::before{display:none}
+    .node{margin-bottom:22px}
+  }
+
+  /* ---------- features ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+  @media(max-width:900px){.grid3{grid-template-columns:1fr 1fr}}
+  @media(max-width:600px){.grid3{grid-template-columns:1fr}}
+  .feat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px 24px;position:relative;overflow:hidden;transition:transform .22s,border-color .22s}
+  .feat::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(79,156,249,.55),transparent);opacity:0;transition:opacity .3s}
+  .feat:hover{transform:translateY(-3px);border-color:var(--line2)}
+  .feat:hover::before{opacity:1}
+  .feat-ic{width:42px;height:42px;border-radius:12px;background:var(--acc-soft);border:1px solid rgba(79,156,249,.25);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .feat-ic svg{stroke:var(--acc)}
+  .feat h3{font:600 1.02rem var(--body);letter-spacing:-.01em}
+  .feat p{color:var(--mut);font-size:.88rem;margin-top:8px}
+
+  /* ---------- architecture ---------- */
+  .arch{max-width:560px;margin:48px auto 0}
+  .layer{position:relative;background:var(--panel);border:1px solid var(--line2);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px;transition:border-color .25s,transform .25s}
+  .layer:hover{border-color:var(--acc);transform:scale(1.015)}
+  .layer .l-ic{width:38px;height:38px;flex:none;border-radius:10px;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+  .layer .l-ic svg{stroke:var(--acc)}
+  .layer b{font-size:.95rem}
+  .layer span{display:block;font:400 .74rem var(--mono);color:var(--dim);margin-top:2px}
+  .conn{display:flex;justify-content:center;padding:2px 0}
+  .conn svg{display:block}
+  .conn .flow{stroke:var(--acc);stroke-dasharray:3 7;animation:dashflow 1.4s linear infinite}
+  @keyframes dashflow{to{stroke-dashoffset:-10}}
+  .arch-links{display:flex;gap:14px;justify-content:center;margin-top:34px;flex-wrap:wrap}
+
+  /* ---------- demo ---------- */
+  #demo .panel{background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:30px;margin-top:44px;box-shadow:0 30px 70px -40px rgba(0,0,0,.7)}
+  .scen{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+  .scen-chip{font:500 .8rem var(--body);color:var(--mut);background:var(--bg2);border:1px solid var(--line2);border-radius:999px;padding:8px 16px;cursor:pointer;transition:all .18s}
+  .scen-chip:hover{color:var(--ink);border-color:var(--acc);transform:translateY(-1px)}
+  .scen-chip.sel{color:var(--acc);border-color:var(--acc);background:var(--acc-soft)}
+  label{display:block;font:500 .74rem var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+  textarea,input{width:100%;background:var(--bg2);color:var(--ink);border:1px solid var(--line2);border-radius:12px;padding:13px 14px;font:400 .95rem var(--body);transition:border-color .2s,box-shadow .2s}
+  textarea:focus,input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(79,156,249,.18)}
+  textarea{min-height:76px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  @media(max-width:600px){.row{grid-template-columns:1fr}}
+  .go{margin-top:22px;padding:14px 28px;background:var(--acc);color:#04101f;border:none;border-radius:12px;font:600 .98rem var(--body);cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:transform .18s,box-shadow .18s;box-shadow:0 8px 26px -10px rgba(79,156,249,.6)}
+  .go:hover{transform:translateY(-2px);box-shadow:0 12px 32px -10px rgba(79,156,249,.75)}
+  .go:disabled{opacity:.6;cursor:wait;transform:none}
+  .spin{width:15px;height:15px;border:2px solid rgba(4,16,31,.3);border-top-color:#04101f;border-radius:50%;animation:rot .7s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  .result{margin-top:26px;border-top:1px solid var(--line);padding-top:24px;animation:fadeup .45s ease}
+  @keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .r-label{font:500 .72rem var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+  .r-answer{font-size:1rem;color:var(--ink)}
+  .r-answer .cite{font:500 .74rem var(--mono);color:var(--acc);background:var(--acc-soft);border:1px solid rgba(79,156,249,.3);border-radius:6px;padding:1px 7px;white-space:nowrap}
+  .r-cites{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .r-cite{font:500 .76rem var(--mono);color:var(--acc);background:var(--acc-soft);border:1px solid rgba(79,156,249,.3);border-radius:8px;padding:4px 11px}
+  .r-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+  @media(max-width:700px){.r-grid{grid-template-columns:1fr}}
+  .r-box{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .step{display:flex;gap:12px;padding:7px 0;font:400 .8rem var(--mono);color:var(--mut);border-bottom:1px dashed var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .n{color:var(--acc);flex:none}
+  .step .d{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tool-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font:500 .8rem var(--mono);border-bottom:1px dashed var(--line)}
+  .tool-row:last-child{border-bottom:none}
+  .tool-row span{color:var(--dim);flex:none}
+  .tool-row b{color:var(--ink);font-weight:500;text-align:right}
+  .tool-row b.neg{color:var(--bad)} .tool-row b.pos{color:var(--ok)}
+  .r-err{margin-top:24px;padding:16px;border:1px solid rgba(255,107,107,.35);background:rgba(255,107,107,.08);border-radius:12px;color:var(--bad);font-size:.9rem}
+
+  /* ---------- evals ---------- */
+  .gate{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:20px 24px;margin-top:44px;flex-wrap:wrap}
+  .gate-l{display:flex;align-items:center;gap:14px}
+  .gate-dot{width:12px;height:12px;border-radius:50%;background:var(--dim);flex:none}
+  .gate.pass .gate-dot{background:var(--ok);animation:ping 2.4s ease-out infinite}
+  .gate.fail .gate-dot{background:var(--bad)}
+  .gate b{font:600 1.05rem var(--body)}
+  .gate.pass b{color:var(--ok)} .gate.fail b{color:var(--bad)}
+  .gate .g-sub{font:400 .8rem var(--mono);color:var(--dim)}
+  .rerun{font:500 .8rem var(--mono);color:var(--mut);background:var(--bg2);border:1px solid var(--line2);border-radius:10px;padding:8px 16px;cursor:pointer;transition:all .18s}
+  .rerun:hover{color:var(--ink);border-color:var(--acc)}
+  .rings{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
+  @media(max-width:900px){.rings{grid-template-columns:1fr 1fr}}
+  .ring-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 18px;text-align:center}
+  .ring-wrap{position:relative;width:110px;height:110px;margin:0 auto}
+  .ring-wrap svg{transform:rotate(-90deg)}
+  .ring-bg{fill:none;stroke:var(--bg2);stroke-width:8}
+  .ring-fg{fill:none;stroke:var(--ok);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1.1s cubic-bezier(.22,.8,.3,1)}
+  .ring-fg.miss{stroke:var(--bad)}
+  .ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 1.25rem var(--disp)}
+  .ring-card h4{font:600 .88rem var(--body);margin-top:14px}
+  .ring-card p{font:400 .72rem var(--mono);color:var(--dim);margin-top:5px}
+  .ring-card .thr{display:inline-block;margin-top:9px;font:500 .7rem var(--mono);padding:3px 9px;border-radius:6px}
+  .ring-card .thr.p{color:var(--ok);background:var(--ok-soft)}
+  .ring-card .thr.f{color:var(--bad);background:rgba(255,107,107,.1)}
+  .cases{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+  .cases table{width:100%;border-collapse:collapse;font-size:.82rem;min-width:540px}
+  .cases th{font:500 .7rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .cases td{padding:10px 16px;border-bottom:1px solid var(--line);color:var(--mut)}
+  .cases tr:last-child td{border-bottom:none}
+  .cases td:first-child{font-family:var(--mono);font-size:.78rem;color:var(--ink)}
+  .ok-pill,.bad-pill{font:500 .72rem var(--mono);padding:2px 9px;border-radius:6px}
+  .ok-pill{color:var(--ok);background:var(--ok-soft)}
+  .bad-pill{color:var(--bad);background:rgba(255,107,107,.1)}
+  .evals-note{font:400 .78rem var(--mono);color:var(--dim);margin-top:16px}
+
+  /* ---------- stack ---------- */
+  .badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:38px}
+  .badge{display:inline-flex;align-items:center;gap:9px;font:500 .84rem var(--body);color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 16px;transition:all .2s}
+  .badge:hover{color:var(--ink);border-color:var(--acc);transform:translateY(-2px)}
+  .badge i{width:8px;height:8px;border-radius:3px;background:var(--acc);flex:none;opacity:.85}
+  .badge.opt i{background:var(--dim)}
+  .badge small{font:400 .68rem var(--mono);color:var(--dim)}
+
+  footer{border-top:1px solid var(--line);padding:38px 0 46px;margin-top:30px}
+  .foot{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;color:var(--dim);font-size:.85rem}
+  .foot a{color:var(--mut)} .foot a:hover{color:var(--ink)}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    html{scroll-behavior:auto}
+    .reveal{opacity:1;transform:none}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Enterprise AI Copilot Platform</h1>
-  <div class="sub">Module 1 — ERP Sync Reconciliation Copilot · <a href="https://github.com/FTD-minds/copilot-platform">source</a></div>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="diag">Diagnose</div>
-    <div class="tab" data-tab="evals">Eval Dashboard</div>
+<nav aria-label="Primary">
+  <div class="nav-in">
+    <a class="brand" href="#top" aria-label="Enterprise AI Copilot Platform — home">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="23" height="23" rx="6.5" stroke="#4f9cf9" stroke-width="1.6"/>
+        <circle cx="9" cy="13" r="2.2" fill="#4f9cf9"/><circle cx="17.5" cy="8.5" r="1.7" fill="#43d6a3"/><circle cx="17.5" cy="17.5" r="1.7" fill="#4f9cf9" opacity=".55"/>
+        <path d="M10.8 11.9l4.9-2.6M10.8 14.1l4.9 2.6" stroke="#4f9cf9" stroke-width="1.2" opacity=".6"/>
+      </svg>
+      Copilot Platform
+    </a>
+    <div class="nav-links">
+      <a class="nl" href="#how">How it works</a>
+      <a class="nl" href="#features">Features</a>
+      <a class="nl" href="#architecture">Architecture</a>
+      <a class="nl" href="#demo">Demo</a>
+      <a class="nl" href="#evals">Evals</a>
+      <a href="https://github.com/FTD-minds/copilot-platform" aria-label="GitHub repository">GitHub ↗</a>
+      <span class="status" id="health" role="status"><i></i><span id="health-t">checking…</span></span>
+    </div>
   </div>
+</nav>
 
-  <!-- DIAGNOSE -->
-  <section id="diag">
-    <div class="card">
-      <label class="muted">Describe the sync / reconciliation problem</label>
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Open source · Module 1 — ERP Sync Reconciliation</span>
+      <h1>Enterprise AI Copilot Platform</h1>
+      <p class="tagline">Production-ready enterprise AI platform for diagnosing operational problems.</p>
+      <p class="lede">Retrieval-augmented copilots grounded in a domain knowledge base, built for <strong>enterprise integrations</strong> — ERP, accounting, and payment systems. Every answer is <strong>citation-backed</strong>, every model is swappable by configuration, and every release must pass an <strong>evaluation gate</strong> before it ships.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#demo">Launch Interactive Demo
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4l-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="btn" href="#architecture">View Architecture</a>
+      </div>
+      <div class="facts" aria-label="Verified project facts">
+        <div class="fact"><b>8</b>golden eval cases</div>
+        <div class="fact"><b>4</b>gated quality metrics</div>
+        <div class="fact"><b>20</b>tests in CI</div>
+        <div class="fact"><b>6</b>architecture ADRs</div>
+        <div class="fact"><b>MIT</b>licensed</div>
+      </div>
+    </div>
+
+    <!-- Real output of the Stripe scenario — reproducible in the demo below -->
+    <div class="shot reveal" aria-label="Example diagnosis — real platform output">
+      <div class="shot-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="shot-title">POST /modules/erp-sync/agent-diagnose</span></div>
+      <div class="shot-body">
+        <div class="shot-q">"My Stripe payout does not match the deposit in my bank feed"</div>
+        <p class="shot-a">Likely area: <strong>Stripe/ACH payout does not match deposit amount.</strong> A bank feed shows one payout, but the books show several separate payments that do not reconcile… <span class="cite">kb-003</span></p>
+        <div class="shot-steps">plan → retrieve → reconciliation_calculator</div>
+        <div class="shot-recon"><span>expected_net <b style="color:var(--ink)">1000.00</b></span><span>deposit <b style="color:var(--ink)">970.00</b></span><span>discrepancy <b>−30.00</b></span></div>
+      </div>
+      <div class="shot-note">● Real output — run this exact scenario in the demo below</div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section id="how">
+  <div class="wrap">
+    <span class="sec-eyebrow">How it works</span>
+    <h2 class="reveal">From messy operational problem<br>to cited root cause.</h2>
+    <p class="sec-sub reveal">A deterministic plan → act → synthesize agent loop combines retrieval with computational tools, so the answer is grounded in knowledge and checked by math — not guessed.</p>
+
+    <div class="pipe reveal" id="pipe" aria-label="Diagnostic pipeline">
+      <div class="node">
+        <div class="node-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9h8M8 13h5"/><path d="M21 12a9 9 0 1 1-4.4-7.7L21 3l-.8 4.5A8.96 8.96 0 0 1 21 12z"/></svg></div>
+        <h4>Business Problem</h4><p>Described in plain language, with optional real numbers</p>
+      </div>
+      <div class="node">
+        <div class="node-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h4>Retriever</h4><p>Embeds the query and searches by cosine similarity</p>
+      </div>
+      <div class="node">
+        <div class="node-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>
+        <h4>Knowledge Base</h4><p>Curated domain entries on real ERP failure modes</p>
+      </div>
+      <div class="node">
+        <div class="node-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12h6M12 9v6"/></svg></div>
+        <h4>LLM</h4><p>Provider-agnostic synthesis, constrained to retrieved context</p>
+      </div>
+      <div class="node">
+        <div class="node-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6m0 0l3-3m-3 3L9 6"/><circle cx="12" cy="15" r="5.5"/><circle cx="12" cy="15" r="1.6"/></svg></div>
+        <h4>Root Cause Analysis</h4><p>Cited diagnosis, cross-checked by reconciliation math</p>
+      </div>
+      <div class="node">
+        <div class="node-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h4>Recommended Action</h4><p>Concrete fix, traceable to its knowledge source</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section id="features" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="sec-eyebrow">Platform capabilities</span>
+    <h2 class="reveal">Built like infrastructure,<br>not a chatbot wrapper.</h2>
+    <div class="grid3">
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h3>Retrieval-Augmented Generation</h3>
+        <p>Answers come from your organization's knowledge, not the model's imagination — so guidance reflects how your systems actually behave.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></div>
+        <h3>Citation-Backed Answers</h3>
+        <p>Every diagnosis names its sources. Teams can verify before they act, and auditors can trace every recommendation to a knowledge entry.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9m0 0l-3-3m3 3l-3 3M20 17h-9m0 0l3-3m-3 3l3 3"/></svg></div>
+        <h3>Model Router</h3>
+        <p>Anthropic, OpenAI, or a deterministic mock — swap providers by configuration, not code. No vendor lock-in, no rewrite when the market moves.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-5"/><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"/></svg></div>
+        <h3>Evaluation Pipeline</h3>
+        <p>Quality is a release gate, not a hope. A golden-case harness scores retrieval, tool use, and groundedness — CI blocks any change that regresses.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3>Enterprise Security</h3>
+        <p>Keyless by default: the hosted demo runs with no secrets in the image. Provider credentials are injected by environment, never committed.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></div>
+        <h3>Modular Architecture</h3>
+        <p>Each copilot is an independent module over shared platform services — add the next domain without touching the ones already in production.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section id="architecture">
+  <div class="wrap">
+    <span class="sec-eyebrow">Architecture</span>
+    <h2 class="reveal">One request, straight through the stack.</h2>
+    <p class="sec-sub reveal">A deliberately thin, inspectable path — documented in six Architecture Decision Records.</p>
+
+    <div class="arch reveal">
+      <div class="layer"><div class="l-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div><div><b>Frontend</b><span>single-file console — zero build step, served by the API</span></div></div>
+      <div class="conn"><svg width="20" height="26" aria-hidden="true"><line class="flow" x1="10" y1="0" x2="10" y2="26" stroke-width="2"/></svg></div>
+      <div class="layer"><div class="l-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div><div><b>FastAPI</b><span>typed contracts (Pydantic) · /chat · /diagnose · /agent-diagnose · /api/evals</span></div></div>
+      <div class="conn"><svg width="20" height="26" aria-hidden="true"><line class="flow" x1="10" y1="0" x2="10" y2="26" stroke-width="2"/></svg></div>
+      <div class="layer"><div class="l-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><div><b>Retriever</b><span>embedding + cosine search over the module knowledge base</span></div></div>
+      <div class="conn"><svg width="20" height="26" aria-hidden="true"><line class="flow" x1="10" y1="0" x2="10" y2="26" stroke-width="2"/></svg></div>
+      <div class="layer"><div class="l-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><div><b>pgvector</b><span>production store (Postgres 16, docker-compose) — hermetic in-memory twin for CI · ADR-003</span></div></div>
+      <div class="conn"><svg width="20" height="26" aria-hidden="true"><line class="flow" x1="10" y1="0" x2="10" y2="26" stroke-width="2"/></svg></div>
+      <div class="layer"><div class="l-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12h6M12 9v6"/></svg></div><div><b>LLM Provider</b><span>router: Anthropic · OpenAI · deterministic mock — chosen by config · ADR-002</span></div></div>
+      <div class="conn"><svg width="20" height="26" aria-hidden="true"><line class="flow" x1="10" y1="0" x2="10" y2="26" stroke-width="2"/></svg></div>
+      <div class="layer"><div class="l-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><div><b>Response</b><span>grounded answer + citations + agent steps + tool outputs</span></div></div>
+    </div>
+
+    <div class="arch-links reveal">
+      <a class="btn" href="https://github.com/FTD-minds/copilot-platform/blob/main/ARCHITECTURE.md">Read ARCHITECTURE.md ↗</a>
+      <a class="btn" href="https://github.com/FTD-minds/copilot-platform/tree/main/docs/adr">Browse the 6 ADRs ↗</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DEMO ================= -->
+<section id="demo" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="sec-eyebrow">Interactive demo</span>
+    <h2 class="reveal">Diagnose a real reconciliation failure.</h2>
+    <p class="sec-sub reveal">Pick a scenario — one click fills every field with a case drawn from the evaluation suite — or describe your own sync problem.</p>
+
+    <div class="panel reveal">
+      <div class="scen" id="scen" role="group" aria-label="Sample scenarios"></div>
+
+      <label for="q">Describe the sync / reconciliation problem</label>
       <textarea id="q">My Stripe payout does not match the deposit in my bank feed</textarea>
       <div class="row">
-        <input id="gross" placeholder="gross payments (e.g. 600,400)" value="600,400">
-        <input id="fees" placeholder="processor fees (e.g. 0)" value="0">
+        <div><label for="gross">Gross payments</label><input id="gross" placeholder="e.g. 600,400" value="600,400"></div>
+        <div><label for="fees">Processor fees</label><input id="fees" placeholder="e.g. 0" value="0"></div>
       </div>
       <div class="row">
-        <input id="deposit" placeholder="bank deposit (e.g. 970)" value="970">
-        <input id="mapping" placeholder="mapping: item|coa vs item|coa (e.g. item,coa)">
+        <div><label for="deposit">Bank deposit</label><input id="deposit" placeholder="e.g. 970" value="970"></div>
+        <div><label for="mapping">Mapping modes <span style="text-transform:none;letter-spacing:0">(item|coa , item|coa)</span></label><input id="mapping" placeholder="e.g. item,coa"></div>
       </div>
-      <button class="go" onclick="diagnose()">Diagnose</button>
-      <div id="out" class="ans"></div>
-    </div>
-  </section>
+      <button class="go" id="run" onclick="diagnose()">Run Diagnosis
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4l-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
 
-  <!-- EVALS -->
-  <section id="evals" class="hidden">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Evaluation metrics</strong>
-        <span id="gate" class="muted">loading…</span>
-      </div>
-      <div id="metrics" style="margin-top:12px"></div>
-      <div class="muted" style="margin-top:12px">Golden cases: <span id="ncases">—</span> · gate enforced in CI</div>
+      <div id="out" aria-live="polite"></div>
     </div>
-  </section>
-</div>
+  </div>
+</section>
+
+<!-- ================= EVALS ================= -->
+<section id="evals">
+  <div class="wrap">
+    <span class="sec-eyebrow">Evaluation dashboard</span>
+    <h2 class="reveal">Quality you can inspect,<br>not just claim.</h2>
+    <p class="sec-sub reveal">The same evaluation harness that gates CI, run live against this deployment. Nothing below is staged — refresh it yourself.</p>
+
+    <div class="gate reveal" id="gate-card">
+      <div class="gate-l">
+        <span class="gate-dot"></span>
+        <div><b id="gate-b">Loading evaluation gate…</b><div class="g-sub" id="gate-sub">running golden cases against the live service</div></div>
+      </div>
+      <button class="rerun" onclick="loadEvals(true)" id="rerun">↻ Re-run evals</button>
+    </div>
+
+    <div class="rings" id="rings" aria-label="Evaluation metrics"></div>
+    <div class="cases" id="cases" aria-label="Golden case results"></div>
+    <p class="evals-note reveal">Same four metrics gate every push in GitHub Actions (ci.yml) — a regression on any threshold blocks the merge. This dashboard calls <span class="mono">GET /api/evals</span> and renders whatever the harness returns.</p>
+  </div>
+</section>
+
+<!-- ================= STACK ================= -->
+<section id="stack" style="padding-top:40px">
+  <div class="wrap">
+    <span class="sec-eyebrow">Built with</span>
+    <h2 class="reveal">The stack, exactly as it is.</h2>
+    <div class="badges reveal" aria-label="Technologies used">
+      <span class="badge"><i></i>Python 3.12</span>
+      <span class="badge"><i></i>FastAPI</span>
+      <span class="badge"><i></i>Pydantic v2</span>
+      <span class="badge"><i></i>Uvicorn</span>
+      <span class="badge"><i></i>httpx</span>
+      <span class="badge"><i></i>Docker + Compose</span>
+      <span class="badge"><i></i>pgvector <small>Postgres 16</small></span>
+      <span class="badge opt"><i></i>Anthropic API <small>optional provider</small></span>
+      <span class="badge opt"><i></i>OpenAI API <small>optional provider</small></span>
+      <span class="badge opt"><i></i>MCP <small>optional extra</small></span>
+      <span class="badge"><i></i>pytest</span>
+      <span class="badge"><i></i>Ruff</span>
+      <span class="badge"><i></i>mypy</span>
+      <span class="badge"><i></i>GitHub Actions</span>
+      <span class="badge"><i></i>Render</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span>Enterprise AI Copilot Platform · MIT license</span>
+    <span>
+      <a href="https://github.com/FTD-minds/copilot-platform">GitHub</a> ·
+      <a href="https://github.com/FTD-minds/copilot-platform/tree/main/docs/adr">ADRs</a> ·
+      <a href="https://ftd-minds.github.io/portfolio/">Built by Senay Mesfin</a>
+    </span>
+  </div>
+</footer>
 
 <script>
 const $ = s => document.querySelector(s);
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  $('#diag').classList.toggle('hidden', t.dataset.tab!=='diag');
-  $('#evals').classList.toggle('hidden', t.dataset.tab!=='evals');
-  if(t.dataset.tab==='evals') loadEvals();
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const citeify = s => esc(s).replace(/\[(kb-\d+)\]/g, '<span class="cite">$1</span>');
+
+/* ---------- live health pill (real /health endpoint) ---------- */
+fetch('/health').then(r => r.json()).then(d => {
+  const el = $('#health');
+  if (d.status === 'ok') { el.classList.add('ok'); $('#health-t').textContent = 'live · v' + d.version; }
+  else { el.classList.add('err'); $('#health-t').textContent = 'degraded'; }
+}).catch(() => { $('#health').classList.add('err'); $('#health-t').textContent = 'offline'; });
+
+/* ---------- scroll reveals ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}), { threshold: .15 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* pipeline pulse re-fires each time it scrolls into view */
+const pipeIo = new IntersectionObserver(es => es.forEach(e => {
+  e.target.classList.toggle('live', e.isIntersecting);
+}), { threshold: .3 });
+pipeIo.observe($('#pipe'));
+
+/* ---------- sample scenarios (each verified against the golden eval suite) ---------- */
+const SCENARIOS = [
+  { name: 'Stripe payout mismatch',
+    q: 'My Stripe payout does not match the deposit in my bank feed',
+    gross: '600,400', fees: '0', deposit: '970', mapping: '' },
+  { name: 'NetSuite reconciliation',
+    q: 'after migrating from Sage Intacct to NetSuite transactions fail to post',
+    gross: '', fees: '', deposit: '', mapping: '' },
+  { name: 'Canada GST sync',
+    q: 'canada sales tax is syncing to the wrong CRA agency',
+    gross: '', fees: '', deposit: '', mapping: '' },
+  { name: 'Ramp AP issue',
+    q: 'Ramp AP automation bills are not exporting to the ERP',
+    gross: '', fees: '', deposit: '', mapping: '' },
+  { name: 'Wrong income account',
+    q: 'items are posting to the wrong income account after sync',
+    gross: '', fees: '', deposit: '', mapping: 'item,coa' },
+];
+const scenBox = $('#scen');
+SCENARIOS.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.className = 'scen-chip'; b.type = 'button'; b.textContent = s.name;
+  b.setAttribute('aria-label', 'Load scenario: ' + s.name);
+  b.onclick = () => {
+    document.querySelectorAll('.scen-chip').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    $('#q').value = s.q; $('#gross').value = s.gross; $('#fees').value = s.fees;
+    $('#deposit').value = s.deposit; $('#mapping').value = s.mapping;
+    $('#out').innerHTML = '';
+    $('#run').focus();
+  };
+  if (i === 0) b.classList.add('sel');
+  scenBox.appendChild(b);
 });
 
-async function diagnose(){
+/* ---------- diagnose (same endpoint + field semantics as before) ---------- */
+async function diagnose() {
   const inputs = {};
   const gross = $('#gross').value.trim();
-  if(gross){ inputs.gross_payments = gross.split(',').map(x=>parseFloat(x)); inputs.processor_fees = parseFloat($('#fees').value||'0'); inputs.bank_deposit = parseFloat($('#deposit').value||'0'); }
-  const m = $('#mapping').value.trim();
-  if(m){ const [a,b]=m.split(','); inputs.item_mapping_mode=(a||'').trim(); inputs.integration_mode=(b||'').trim(); }
-  $('#out').innerHTML = '<span class="muted">diagnosing…</span>';
-  const r = await fetch('/modules/erp-sync/agent-diagnose',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:$('#q').value,inputs})});
-  const d = await r.json();
-  let html = '<div>'+d.answer+'</div>';
-  html += '<div style="margin-top:10px">'+d.citations.map(c=>'<span class="chip">'+c+'</span>').join('')+'</div>';
-  html += '<div class="steps">steps: '+d.steps.map(s=>s.name).join(' → ')+'</div>';
-  if(d.tool_outputs && d.tool_outputs.reconciliation_calculator){
-    const t=d.tool_outputs.reconciliation_calculator;
-    html += '<div class="steps">recon: expected_net='+t.expected_net+' discrepancy='+t.discrepancy+' reconciles='+t.reconciles+'</div>';
+  if (gross) {
+    inputs.gross_payments = gross.split(',').map(x => parseFloat(x));
+    inputs.processor_fees = parseFloat($('#fees').value || '0');
+    inputs.bank_deposit = parseFloat($('#deposit').value || '0');
   }
-  $('#out').innerHTML = html;
+  const m = $('#mapping').value.trim();
+  if (m) { const [a, b] = m.split(','); inputs.item_mapping_mode = (a || '').trim(); inputs.integration_mode = (b || '').trim(); }
+
+  const btn = $('#run');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin" aria-hidden="true"></span> Running diagnostic agent…';
+  $('#out').innerHTML = '';
+
+  try {
+    const r = await fetch('/modules/erp-sync/agent-diagnose', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query: $('#q').value, inputs })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+
+    let html = '<div class="result">';
+    html += '<div class="r-label">Diagnosis</div><p class="r-answer">' + citeify(d.answer) + '</p>';
+    html += '<div class="r-label" style="margin-top:18px">Citations</div><div class="r-cites">' +
+            d.citations.map(c => '<span class="r-cite">' + esc(c) + '</span>').join('') + '</div>';
+    html += '<div class="r-grid">';
+    html += '<div class="r-box"><div class="r-label">Agent steps</div>' +
+            d.steps.map((s, i) => '<div class="step"><span class="n">' + (i + 1) + ' · ' + esc(s.name) + '</span><span class="d">' + esc(s.detail) + '</span></div>').join('') + '</div>';
+    if (d.tool_outputs && d.tool_outputs.reconciliation_calculator) {
+      const t = d.tool_outputs.reconciliation_calculator;
+      html += '<div class="r-box"><div class="r-label">Reconciliation check</div>' +
+        '<div class="tool-row"><span>expected_net</span><b>' + esc(t.expected_net) + '</b></div>' +
+        '<div class="tool-row"><span>discrepancy</span><b class="' + (t.discrepancy === 0 ? 'pos' : 'neg') + '">' + esc(t.discrepancy) + '</b></div>' +
+        '<div class="tool-row"><span>reconciles</span><b class="' + (t.reconciles ? 'pos' : 'neg') + '">' + t.reconciles + '</b></div></div>';
+    } else if (d.tool_outputs && d.tool_outputs.mapping_validator) {
+      const t = d.tool_outputs.mapping_validator;
+      html += '<div class="r-box"><div class="r-label">Mapping validation</div>' +
+        '<div class="tool-row"><span>valid</span><b class="' + (t.valid ? 'pos' : 'neg') + '">' + t.valid + '</b></div>' +
+        (t.issue ? '<div class="tool-row"><span>issue</span><b>' + esc(t.issue) + '</b></div>' : '') +
+        (t.fix ? '<div class="tool-row"><span>fix</span><b>' + esc(t.fix) + '</b></div>' : '') + '</div>';
+    }
+    html += '</div></div>';
+    $('#out').innerHTML = html;
+  } catch (err) {
+    $('#out').innerHTML = '<div class="r-err">Could not reach the diagnosis API (' + esc(err.message) + '). If you are viewing a static copy of this page, start the service: <span class="mono">docker compose up</span></div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Run Diagnosis <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4l-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
 }
 
-async function loadEvals(){
-  $('#metrics').innerHTML='<span class="muted">running evals…</span>';
-  const r = await fetch('/api/evals'); const d = await r.json();
-  $('#ncases').textContent = d.cases.length;
-  $('#gate').innerHTML = d.passing ? '<span class="pass">● PASSING</span>' : '<span class="fail">● FAILING</span>';
-  $('#metrics').innerHTML = Object.entries(d.metrics).map(([k,v])=>{
-    const th = d.thresholds[k]; const ok = v>=th; const pct=Math.round(v*100);
-    return '<div class="metric"><span>'+k+'</span><span class="bar"><i style="width:'+pct+'%;background:'+(ok?'var(--ok)':'var(--bad)')+'"></i></span><span class="val '+(ok?'pass':'fail')+'">'+pct+'% / '+Math.round(th*100)+'%</span></div>';
-  }).join('');
+/* ---------- evals dashboard (renders GET /api/evals verbatim) ---------- */
+const METRIC_META = {
+  retrieval_accuracy:      { label: 'Retrieval Accuracy',   sub: 'expected knowledge entry retrieved' },
+  tool_selection_accuracy: { label: 'Tool Selection',        sub: 'right tool chosen for the problem' },
+  tool_correctness:        { label: 'Tool Correctness',      sub: 'computations exactly right — 100% required' },
+  groundedness:            { label: 'Groundedness',          sub: 'hallucination guard: every answer cites a source or tool' },
+};
+let evalsLoaded = false;
+
+async function loadEvals(force) {
+  if (evalsLoaded && !force) return;
+  evalsLoaded = true;
+  $('#rerun').textContent = '↻ running…';
+  $('#rings').innerHTML = '';
+  $('#cases').innerHTML = '';
+  try {
+    const r = await fetch('/api/evals');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+
+    const g = $('#gate-card');
+    g.classList.remove('pass', 'fail');
+    g.classList.add(d.passing ? 'pass' : 'fail');
+    $('#gate-b').textContent = d.passing ? 'Evaluation gate: PASSING' : 'Evaluation gate: FAILING';
+    $('#gate-sub').textContent = d.cases.length + ' golden cases · ' + Object.keys(d.metrics).length + ' gated metrics · gate enforced in CI';
+
+    const R = 47, C = 2 * Math.PI * R;
+    $('#rings').innerHTML = Object.entries(d.metrics).map(([k, v]) => {
+      const th = d.thresholds[k], ok = v >= th, meta = METRIC_META[k] || { label: k, sub: '' };
+      return '<div class="ring-card">' +
+        '<div class="ring-wrap"><svg width="110" height="110" viewBox="0 0 110 110" role="img" aria-label="' + esc(meta.label) + ' ' + Math.round(v * 100) + ' percent">' +
+        '<circle class="ring-bg" cx="55" cy="55" r="' + R + '"/>' +
+        '<circle class="ring-fg' + (ok ? '' : ' miss') + '" cx="55" cy="55" r="' + R + '" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '" data-v="' + (C * (1 - v)) + '"/>' +
+        '</svg><span class="ring-val">' + Math.round(v * 100) + '%</span></div>' +
+        '<h4>' + esc(meta.label) + '</h4><p>' + esc(meta.sub) + '</p>' +
+        '<span class="thr ' + (ok ? 'p' : 'f') + '">' + (ok ? '✓' : '✗') + ' threshold ' + Math.round(th * 100) + '%</span></div>';
+    }).join('');
+    requestAnimationFrame(() => requestAnimationFrame(() =>
+      document.querySelectorAll('.ring-fg').forEach(c => c.style.strokeDashoffset = c.dataset.v)));
+
+    const pill = ok => ok ? '<span class="ok-pill">✓ pass</span>' : '<span class="bad-pill">✗ fail</span>';
+    $('#cases').innerHTML = '<table><thead><tr><th>Golden case</th><th>Retrieval</th><th>Tool selection</th><th>Tool correct</th><th>Grounded</th></tr></thead><tbody>' +
+      d.cases.map(c => '<tr><td>' + esc(c.id) + '</td><td>' + pill(c.retrieval_ok) + '</td><td>' + pill(c.tool_selection_ok) + '</td><td>' + pill(c.tool_correct) + '</td><td>' + pill(c.grounded) + '</td></tr>').join('') +
+      '</tbody></table>';
+  } catch (err) {
+    $('#gate-b').textContent = 'Evaluation service unreachable';
+    $('#gate-sub').textContent = String(err.message);
+  } finally {
+    $('#rerun').textContent = '↻ Re-run evals';
+  }
 }
+
+/* lazy-load evals when the section scrolls into view */
+const evalIo = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { loadEvals(false); evalIo.disconnect(); }
+}), { threshold: .2 });
+evalIo.observe($('#evals'));
 </script>
 </body>
 </html>
